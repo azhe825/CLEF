@@ -17,6 +17,7 @@ class MAR(object):
         self.atleast=100
         self.true_rate=1
         self.weight=0
+        self.lastpos=0
 
 
     def create(self,filename,path="train"):
@@ -26,6 +27,7 @@ class MAR(object):
         self.body={}
         self.abs=[]
         self.full=[]
+        self.path=path
         try:
             ## if model already exists, load it ##
             return self.load()
@@ -49,6 +51,25 @@ class MAR(object):
             tmp = pickle.load(handle)
         return tmp
 
+    def load_syn(self):
+        with open("../workspace/"+self.path+"_data/topics_"+self.path+"/" + str(self.filename), "r") as f:
+            content = f.read()
+        try:
+            tmp=content.split('Query:')[0]
+            tmp=tmp.split('Title: ')[1].strip()
+            self.body['Pid'].append('Syn')
+            self.body['text'].append(tmp)
+            self.body['code'].append('yes')
+            self.body['true_code'].append('no')
+            self.body['cost'].append('NS')
+            self.body['cost2'].append('NFN')
+            self.body['score'].append(0)
+            self.body['rank'].append(0)
+            self.lastpos=1
+            self.preprocess()
+        except:
+            set_trace()
+            pass
 
 
     def loadfile(self):
@@ -132,9 +153,20 @@ class MAR(object):
         ########################################################
         return
 
+    def lda(self):
+        import lda
+        from scipy.sparse import csr_matrix
+        tfer = TfidfVectorizer(lowercase=True, stop_words="english", norm=None, use_idf=False,
+                               vocabulary=self.voc, decode_error="ignore")
+        self.csr_mat = tfer.fit_transform(self.body['text'])
+
+        lda1 = lda.LDA(n_topics=100, alpha=0.1, eta=0.01, n_iter=200)
+        self.csr_mat = csr_matrix(lda1.fit_transform(self.csr_mat.astype(int)))
+        return
+
     def get_numbers(self):
         total = len(self.body["code"])
-        pos = Counter(self.body["code"])["yes"]
+        pos = Counter(self.body["code"])["yes"]-self.lastpos
         neg = Counter(self.body["code"])["no"]
         pos_true = Counter(self.body["true_code"])["yes"]
         try:
@@ -334,7 +366,7 @@ class MAR(object):
         return len(self.abs),len(self.full)
 
     ## Restart ##
-    def restart(self,path="train"):
+    def restart(self):
 
         self.body['code'] = ['undetermined'] * len(self.body['Pid'])
         self.body['true_code'] = ['undetermined'] * len(self.body['Pid'])
@@ -342,36 +374,8 @@ class MAR(object):
         self.body['cost2'] = ['NFN'] * len(self.body['Pid'])
         self.body['score'] = [0] * len(self.body['Pid'])
         self.body['rank'] = [-1] * len(self.body['Pid'])
-        self.weight = 0
-        self.path = path
 
-        # self.abs=[]
-        # self.full=[]
-        # ## load review results
-        # with open("../workspace/training_data/qrel_abs_train", "r") as f:
-        #     abs = f.readlines()
-        # with open("../workspace/training_data/qrel_content_train", "r") as f:
-        #     full = f.readlines()
-        # for ab in abs:
-        #     tmp = ab.split()
-        #     if self.topic in tmp and tmp[-1].strip() == '1':
-        #         self.abs.append(tmp[-2].strip())
-        # for ful in full:
-        #     tmp = ful.split()
-        #     if self.topic in tmp and tmp[-1].strip() == '1':
-        #         self.full.append(tmp[-2].strip())
-        # exc=[]
-        # for ab in self.abs:
-        #     if not ab in self.body["Pid"]:
-        #         exc.append(ab)
-        # for ex in exc:
-        #     self.abs.remove(ex)
-        # exc = []
-        # for ful in self.full:
-        #     if not ful in self.body["Pid"]:
-        #         exc.append(ful)
-        # for ex in exc:
-        #     self.full.remove(ex)
+        self.preprocess()
 
         self.save()
 
