@@ -97,16 +97,21 @@ def repeat_run(path="train"):
 
 ##### basic
 
-def START_AUTO_abs(filename,cl='SVM',runid="abs",path="train"):
+def START_AUTO_abs(filename,cl='SVM',runid="abs",path="train",syn=True):
     lifes=5
     life=lifes
     poslast=0
-    starting=40
+    starting = 0
     rank=1
 
     read = MAR()
     read = read.create(filename,path=path)
     read.restart()
+    if syn:
+        read.load_syn()
+        pne = True
+    else:
+        pne = False
     while True:
         pos, neg, total, pos_true = read.get_numbers()
         print("%d, %d, %d" %(pos,pos+neg, pos_true))
@@ -120,35 +125,40 @@ def START_AUTO_abs(filename,cl='SVM',runid="abs",path="train"):
                 life=lifes
             if life<=0 or pos+neg==total:
                 break
-            ids,c =read.show(pne=False,cl=cl)
+            ids,c =read.show(pne=pne,cl=cl)
             for i, id in enumerate(ids):
                 read.auto_code(id, c[i], rank)
         poslast = pos
         rank = rank + 1
-    read.export(runid=runid)
+    # read.export(runid=runid)
     return read
 
-def START_AUTO(filename,cl='SVM',runid="full",path="train"):
+def START_AUTO(filename,cl='SVM',runid="full",path="train",syn=True):
     lifes=5
     life=lifes
     poslast=0
     rank=1
-    starting=40
+    starting = 0
 
     read = MAR()
     read = read.create(filename, path=path)
     read.restart()
+    if syn:
+        read.load_syn()
+        pne = True
+    else:
+        pne = False
     a,b=read.get_allpos()
     print("%d, %d"%(a,b))
     while True:
         pos, neg, total, pos_true = read.get_numbers()
         print("%d, %d, %d" %(pos,pos+neg, pos_true))
-        if pos==0 or pos+neg<starting:
+        if pos+read.lastpos==0 or pos+neg<starting:
             for id in read.random():
                 read.auto_code(id, 0, rank)
         else:
             if pos_true == 0:
-                ids,c =read.show(pne=False,cl=cl)
+                ids,c =read.show(pne=pne,cl=cl)
                 for i, id in enumerate(ids):
                     read.auto_code(id, c[i], rank)
             else:
@@ -158,24 +168,31 @@ def START_AUTO(filename,cl='SVM',runid="full",path="train"):
                     life=lifes
                 if life<=0 or pos+neg==total:
                     break
-                ids,c =read.show(pne=False,cl=cl)
+                ids,c =read.show(pne=True,cl=cl)
                 for i,id in enumerate(ids):
                     read.auto_code(id, c[i], rank)
         poslast = pos_true
         rank=rank+1
-    read.export(runid=runid)
+    # read.export(runid=runid)
     return read
 
 
 
-def START(filename,cl='SVM',runid="simple",path="train"):
+def START(filename,cl='SVM',runid="simple",path="train",syn=True, lda=False):
     # stop=1
     rank = 1
-    starting = 40
+    starting = 0
 
     read = MAR()
     read = read.create(filename, path=path)
     read.restart()
+    if syn:
+        read.load_syn()
+        pne = True
+    else:
+        pne = False
+    if lda:
+        read.lda()
     a,b = read.get_allpos()
     # print("%d, %d"%(a,b))
 
@@ -185,28 +202,36 @@ def START(filename,cl='SVM',runid="simple",path="train"):
         # print("%d, %d, %d" % (pos, pos + neg, pos_true))
         if pos_true >= b or pos+neg==total:
             break
-        if pos==0 or pos+neg< starting:
+        if pos+read.lastpos==0 or pos+neg< starting:
             for id in read.random():
                 read.auto_code(id, 0, rank)
         else:
-            ids,c =read.show(pne=False,cl=cl)
+            ids,c =read.show(pne=pne,cl=cl)
             for i, id in enumerate(ids):
                 read.auto_code(id, c[i], rank)
         rank=rank+1
-    read.export(runid=runid)
+    # read.export(runid=runid)
+    set_trace()
     return read
 
 
-def START_imb(filename,cl='SVM',runid="imb",path="train"):
+def START_imb(filename,cl='SVM',runid="imb",path="train",syn=True):
     # stop=1
     rank = 1
-    starting = 40
+    starting = 0
 
     read = MAR()
     read = read.create(filename, path=path)
     read.restart()
+    if syn:
+        read.load_syn()
+        pne = True
+    else:
+        pne = False
+
     a,b = read.get_allpos()
-    read.enough=a
+    read.enough = a
+
     # print("%d, %d"%(a,b))
 
     # target = int(a*stop)
@@ -215,26 +240,31 @@ def START_imb(filename,cl='SVM',runid="imb",path="train"):
         # print("%d, %d, %d" % (pos, pos + neg, pos_true))
         if pos_true >= b or pos+neg==total:
             break
-        if pos==0 or pos+neg< starting:
+        if pos+read.lastpos==0 or pos+neg< starting:
             for id in read.random():
                 read.auto_code(id, 0, rank)
         else:
-            ids,c =read.show(pne=False,cl=cl)
+            ids,c =read.show(pne=pne,cl=cl)
             for i, id in enumerate(ids):
                 read.auto_code(id, c[i], rank)
         rank=rank+1
-    read.export(runid=runid)
+    # read.export(runid=runid)
     return read
 
 
-def START_full(filename,cl='SVM',runid="simple_full",path="train"):
+def START_full(filename,cl='SVM',runid="simple_full",path="train",syn=True):
     # stop=1
     rank = 1
-    starting = 40
+    starting = 0
 
     read = MAR()
     read = read.create(filename, path=path)
     read.restart()
+    if syn:
+        read.load_syn()
+        pne = True
+    else:
+        pne = False
     read.weight=9
     a,b = read.get_allpos()
     # print("%d, %d"%(a,b))
@@ -244,27 +274,33 @@ def START_full(filename,cl='SVM',runid="simple_full",path="train"):
         # print("%d, %d, %d" % (pos, pos + neg, pos_true))
         if pos_true >= b:
             break
-        if pos==0 or pos+neg< starting:
+        if pos+read.lastpos==0 or pos+neg< starting:
             for id in read.random():
                 read.auto_code(id, 0, rank)
         else:
-            ids,c =read.show(pne=False,cl=cl)
+            ids,c =read.show(pne=pne,cl=cl)
             for i, id in enumerate(ids):
                 read.auto_code(id, c[i], rank)
-    read.export(runid=runid)
+    # read.export(runid=runid)
     return read
 
-def START_rw(filename,cl='SVM',runid="simple_full",path="train"):
+def START_rw(filename,cl='SVM',runid="simple_full",path="train",syn=True):
     # stop=1
     rank = 1
-    starting = 40
+    starting = 0
+
 
     read = MAR()
     read = read.create(filename, path=path)
     read.restart()
+    if syn:
+        read.load_syn()
+        pne=True
+    else:
+        pne=False
     read.weight=9
-    read.enough=1000
-    a,b = read.get_allpos()
+    a, b = read.get_allpos()
+    read.enough = a
     # print("%d, %d"%(a,b))
     # target = int(a*stop)
     while True:
@@ -272,14 +308,14 @@ def START_rw(filename,cl='SVM',runid="simple_full",path="train"):
         # print("%d, %d, %d" % (pos, pos + neg, pos_true))
         if pos_true >= b:
             break
-        if pos==0 or pos+neg< starting:
+        if pos+read.lastpos==0 or pos+neg< starting:
             for id in read.random():
                 read.auto_code(id, 0, rank)
         else:
-            ids,c =read.show(pne=False,cl=cl)
+            ids,c =read.show(pne=pne,cl=cl)
             for i, id in enumerate(ids):
                 read.auto_code(id, c[i], rank)
-    read.export(runid=runid)
+    # read.export(runid=runid)
     return read
 
 if __name__ == "__main__":
