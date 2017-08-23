@@ -36,6 +36,35 @@ def stat(what):
     out=out+header+result+'\\end{tabular}'
     print(out)
 
+def cost(what):
+    import numpy as np
+    with open('./dump/' + what + '.pickle', 'rb') as f:
+        record = pickle.load(f)
+    n=len(record)
+    m=len(record[record.keys()[0]])
+    out = "\\begin{tabular}{ |l|"+'c|'*(m*2+1)+" }\n \\hline \n"
+    out = out + "& \\multicolumn{"+str(m)+"}{|c|}{MEDIAN} & & \\multicolumn{"+str(m)+"}{|c|}{IQR} \\\\ \n \\cline{2-"+str(2*m+2)+"} \n"
+    header = ""
+    result=""
+    for i,topic in enumerate(record):
+        med = "Topic"+str(topic)
+        iqr = ""
+        for method in record[topic]:
+            if method=="AU+RW":
+                continue
+            if i==0:
+                header = header + " & " + method
+            tmp = np.array(record[topic][method]['x'])+9*np.array(record[topic][method]['pos'])
+            med = med+' & '+str(int(np.median(tmp)))
+            iqr = iqr + ' & ' + str(int(np.percentile(tmp,75)-np.percentile(tmp,25)))
+        med=med+" & "
+        iqr=iqr+"\\\\\n\\hline \n"
+        result=result+med+iqr
+
+    header=header+'&'+header+'\\\\ \n \\hline \n'
+    out=out+header+result+'\\end{tabular}'
+    print(out)
+
 
 ##### general
 
@@ -211,7 +240,6 @@ def START(filename,cl='SVM',runid="simple",path="train",syn=True, lda=False):
                 read.auto_code(id, c[i], rank)
         rank=rank+1
     # read.export(runid=runid)
-    set_trace()
     return read
 
 

@@ -73,7 +73,7 @@ class MAR(object):
 
 
     def loadfile(self):
-
+        batchsize=100
         ## load all candidates
         with open("../workspace/"+self.path+"_data/topics_"+self.path+"/" + str(self.filename), "r") as f:
             content = f.read()
@@ -85,7 +85,7 @@ class MAR(object):
         pidstr=[]
         for i,pid in enumerate(self.body['Pid']):
             pidstr.append(pid)
-            if i%10==9 or i==len(self.body['Pid'])-1:
+            if i%batchsize==batchsize-1 or i==len(self.body['Pid'])-1:
                 qref = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' + ','.join(pidstr) + '&rettype=abstract&retmode=text'
                 req = urllib2.Request(qref)
                 req.add_header('User-agent', 'Mozilla/5.0 (Linux i686)')
